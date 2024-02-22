@@ -11,6 +11,8 @@ abstract class _CustomLayoutStateBase<T extends _SubSwiper> extends State<T>
   int? _animationCount;
   int _currentIndex = 0;
 
+  TextDirection textDirection = TextDirection.rtl;
+
   @override
   void initState() {
     _currentIndex = widget.index ?? 0;
@@ -114,17 +116,29 @@ abstract class _CustomLayoutStateBase<T extends _SubSwiper> extends State<T>
       }
     }
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onPanStart: _onPanStart,
-      onPanEnd: _onPanEnd,
-      onPanUpdate: _onPanUpdate,
-      child: ClipRect(
-        child: Center(
-          child: _buildContainer(list),
-        ),
-      ),
-    );
+    return textDirection == TextDirection.rtl
+        ? GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onPanStart: _onPanStart,
+            onPanEnd: _onPanEndRTL,
+            onPanUpdate: _onPanUpdateRTL,
+            child: ClipRect(
+              child: Center(
+                child: _buildContainer(list),
+              ),
+            ),
+          )
+        : GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onPanStart: _onPanStart,
+            onPanEnd: _onPanEnd,
+            onPanUpdate: _onPanUpdate,
+            child: ClipRect(
+              child: Center(
+                child: _buildContainer(list),
+              ),
+            ),
+          );
   }
 
   @override
@@ -223,12 +237,37 @@ abstract class _CustomLayoutStateBase<T extends _SubSwiper> extends State<T>
     }
   }
 
+  void _onPanEndRTL(DragEndDetails details) {
+    if (_lockScroll) return;
+
+    double velocity = widget.scrollDirection == Axis.horizontal
+        ? details.velocity.pixelsPerSecond.dx
+        : details.velocity.pixelsPerSecond.dy;
+
+    if (_animationController.value >= 0.75 || velocity > 500.0) {
+      if (_currentIndex <= 0 && !widget.loop) {
+        return;
+      }
+      _move(0.0, nextIndex: _currentIndex + 1);
+    } else if (_animationController.value < 0.25 || velocity < -500.0) {
+      if (_currentIndex >= widget.itemCount - 1 && !widget.loop) {
+        return;
+      }
+      _move(1.0, nextIndex: _currentIndex - 1);
+    } else {
+      _move(0.5);
+    }
+  }
+
   void _onPanStart(DragStartDetails details) {
     if (_lockScroll) return;
     _currentValue = _animationController.value;
+    print('_currentValue == ${_currentValue}');
     _currentPos = widget.scrollDirection == Axis.horizontal
         ? details.globalPosition.dx
         : details.globalPosition.dy;
+
+    print('_currentPos == ${_currentPos}');
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
@@ -254,6 +293,33 @@ abstract class _CustomLayoutStateBase<T extends _SubSwiper> extends State<T>
     }
 
     _animationController.value = value;
+  }
+
+  void _onPanUpdateRTL(DragUpdateDetails details) {
+    if (_lockScroll) return;
+    double value = _currentValue +
+        ((widget.scrollDirection == Axis.horizontal
+                    ? details.globalPosition.dx
+                    : details.globalPosition.dy) -
+                _currentPos) /
+            _swiperWidth /
+            2;
+    // no loop ?
+
+    print('value -- $value');
+    if (!widget.loop) {
+      if (_currentIndex >= widget.itemCount - 1) {
+        if (value < 0.5) {
+          value = 0.5;
+        }
+      } else if (_currentIndex <= 0) {
+        if (value > 0.5) {
+          value = 0.5;
+        }
+      }
+    }
+
+    _animationController.value = 1 - value;
   }
 }
 
@@ -380,11 +446,12 @@ class CustomLayoutOption {
 
 class _CustomLayoutSwiper extends _SubSwiper {
   final CustomLayoutOption option;
-
+  final TextDirection textDirection;
   const _CustomLayoutSwiper({
     required this.option,
     double? itemWidth,
     required bool loop,
+    required this.textDirection,
     double? itemHeight,
     ValueChanged<int>? onIndexChanged,
     Key? key,
@@ -445,5 +512,11 @@ class _CustomLayoutState extends _CustomLayoutStateBase<_CustomLayoutSwiper> {
     }
 
     return child;
+  }
+
+  @override
+  void initState() {
+    super.textDirection = widget.textDirection;
+    super.initState();
   }
 }

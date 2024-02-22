@@ -37,6 +37,8 @@ class Swiper extends StatefulWidget {
   /// Inner item height, this property is valid if layout=STACK or layout=TINDER or LAYOUT=CUSTOM,
   final double? itemHeight;
 
+  final TextDirection textDirection;
+
   /// Inner item width, this property is valid if layout=STACK or layout=TINDER or LAYOUT=CUSTOM,
   final double? itemWidth;
 
@@ -129,6 +131,7 @@ class Swiper extends StatefulWidget {
     ///
     this.transformer,
     required this.itemCount,
+    required this.textDirection,
     bool autoplay = false,
     this.layout = SwiperLayout.DEFAULT,
     this.autoplayDelay = kDefaultAutoplayDelayMs,
@@ -212,6 +215,7 @@ class Swiper extends StatefulWidget {
         fade: fade,
         indicatorLayout: indicatorLayout,
         layout: layout,
+        textDirection: TextDirection.ltr,
         transformer: transformer,
         customLayoutOption: customLayoutOption,
         containerHeight: containerHeight,
@@ -280,6 +284,7 @@ class Swiper extends StatefulWidget {
   }) =>
       Swiper(
         fade: fade,
+        textDirection: TextDirection.ltr,
         indicatorLayout: indicatorLayout,
         layout: layout,
         transformer: transformer,
@@ -555,6 +560,7 @@ class _SwiperState extends _SwiperTimerMixin {
     } else if (widget.layout == SwiperLayout.CUSTOM) {
       return _CustomLayoutSwiper(
         loop: widget.loop,
+        textDirection: widget.textDirection,
         option: widget.customLayoutOption!,
         itemWidth: widget.itemWidth,
         itemHeight: widget.itemHeight,
