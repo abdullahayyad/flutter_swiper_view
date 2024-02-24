@@ -118,7 +118,7 @@ abstract class _CustomLayoutStateBase<T extends _SubSwiper> extends State<T>
 
     return textDirection == TextDirection.rtl
         ? GestureDetector(
-            behavior: HitTestBehavior.opaque,
+            behavior: HitTestBehavior.translucent,
             onPanStart: _onPanStart,
             onPanEnd: _onPanEndRTL,
             onPanUpdate: _onPanUpdateRTL,
@@ -129,7 +129,7 @@ abstract class _CustomLayoutStateBase<T extends _SubSwiper> extends State<T>
             ),
           )
         : GestureDetector(
-            behavior: HitTestBehavior.opaque,
+            behavior: HitTestBehavior.translucent,
             onPanStart: _onPanStart,
             onPanEnd: _onPanEnd,
             onPanUpdate: _onPanUpdate,
@@ -243,17 +243,18 @@ abstract class _CustomLayoutStateBase<T extends _SubSwiper> extends State<T>
     double velocity = widget.scrollDirection == Axis.horizontal
         ? details.velocity.pixelsPerSecond.dx
         : details.velocity.pixelsPerSecond.dy;
-
-    if (_animationController.value >= 0.75) {
+    print('velocity------${velocity}');
+    if (_animationController.value >= 0.75 || velocity < 500.0) {
       if (_currentIndex <= 0 && !widget.loop) {
         return;
       }
-      _move(0.0, nextIndex: _currentIndex + 1);
-    } else if (_animationController.value < 0.25) {
+
+      _move(1.0, nextIndex: _currentIndex - 1);
+    } else if (_animationController.value < 0.25 || velocity > 500.0) {
       if (_currentIndex >= widget.itemCount - 1 && !widget.loop) {
         return;
       }
-      _move(1.0, nextIndex: _currentIndex - 1);
+      _move(0.0, nextIndex: _currentIndex + 1);
     } else {
       _move(0.5);
     }
